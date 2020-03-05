@@ -307,6 +307,43 @@ bool Problem::IsGoodStepInLM() {
     }
 }
 
+bool Problem::IsGoodStepInLM2() {
+	// recompute residuals after update state
+	// 统计所有的残差
+	double tempChi = 0.0;
+	for (auto edge: edges_) {
+		edge.second->ComputeResidual();
+		tempChi += edge.second->Chi2();
+	}
+
+	double temp = b_.transpose() * delta_x_;
+	double alpha = temp/((currentChi_ - tempChi)/2 + 2 * temp );
+
+    double scale = 0;
+    scale = alpha* delta_x_.transpose() * (currentLambda_ * alpha* delta_x_ + b_);
+    scale += 1e-3;    // make sure it's non-zero :)
+
+
+
+    double rho = (currentChi_ - tempChi) / scale;
+
+
+    if (rho > 0 && isfinite(tempChi))   // last step was good, 误差在下降
+    {
+        double alpha = 1. - pow((2 * rho - 1), 3);
+        alpha = std::min(alpha, 2. / 3.);
+        double scaleFactor = (std::max)(1. / 3., alpha);
+        currentLambda_ *= scaleFactor;
+        ni_ = 2;
+        currentChi_ = tempChi;
+        return true;
+    } else {
+        currentLambda_ *= ni_;
+        ni_ *= 2;
+        return false;
+    }
+}
+
 /** @brief conjugate gradient with perconditioning
 *
 *  the jacobi PCG method

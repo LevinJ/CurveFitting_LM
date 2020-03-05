@@ -79,7 +79,7 @@ public:
 int main()
 {
     double a=1.0, b=2.0, c=1.0;         // 真实参数值
-    int N = 100;                          // 数据点
+    int N = 500;                          // 数据点
     double w_sigma= 1.;                 // 噪声Sigma值
 
     std::default_random_engine generator;
@@ -101,7 +101,7 @@ int main()
         double n = noise(generator);
         // 观测 y
 //        double y = std::exp( a*x*x + b*x + c ) + n;
-        double y = a*x*x + b*x + c;
+        double y = a*x*x + b*x + c + n;
 
         // 每个观测对应的残差函数
 //        shared_ptr< CurveFittingEdge > edge(new CurveFittingEdge(x,y));
