@@ -102,6 +102,7 @@ bool Problem::Solve(int iterations) {
             oneStepSuccess = IsGoodStepInLM();
             // 后续处理，
             if (oneStepSuccess) {
+            	cout<<delta_x_.transpose()<<endl;
                 // 在新线性化点 构建 hessian
                 MakeHessian();
                 // TODO:: 这个判断条件可以丢掉，条件 b_max <= 1e-12 很难达到，这里的阈值条件不应该用绝对值，而是相对值
