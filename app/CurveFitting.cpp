@@ -78,8 +78,10 @@ public:
 
 int main()
 {
+	bool use_ploy_function = false;
+	bool use_new_lambda_strategy = false;
     double a=1.0, b=2.0, c=1.0;         // 真实参数值
-    int N = 500;                          // 数据点
+    int N = 100;                          // 数据点
     double w_sigma= 1.;                 // 噪声Sigma值
 
     std::default_random_engine generator;
@@ -100,12 +102,22 @@ int main()
         double x = i/100.;
         double n = noise(generator);
         // 观测 y
-//        double y = std::exp( a*x*x + b*x + c ) + n;
-        double y = a*x*x + b*x + c + n;
+        double y;
+        if(use_ploy_function){
+        	y = a*x*x + b*x + c + n;
+        }else{
+        	y = std::exp( a*x*x + b*x + c ) + n;
+        }
+
 
         // 每个观测对应的残差函数
-//        shared_ptr< CurveFittingEdge > edge(new CurveFittingEdge(x,y));
-        shared_ptr< CurveFittingEdge2 > edge(new CurveFittingEdge2(x,y));
+        shared_ptr< Edge > edge;
+        if(use_ploy_function){
+        	edge.reset(new CurveFittingEdge2(x,y));
+        }else{
+        	edge.reset(new CurveFittingEdge(x,y));
+        }
+
         std::vector<std::shared_ptr<Vertex>> edge_vertex;
         edge_vertex.push_back(vertex);
         edge->SetVertex(edge_vertex);
@@ -116,7 +128,7 @@ int main()
 
     std::cout<<"\nTest CurveFitting start..."<<std::endl;
     /// 使用 LM 求解
-    problem.Solve(30);
+    problem.Solve(30, use_new_lambda_strategy);
 
     std::cout << "-------After optimization, we got these parameters :" << std::endl;
     std::cout << vertex->Parameters().transpose() << std::endl;

@@ -64,7 +64,7 @@ public:
      * @param iterations
      * @return
      */
-    bool Solve(int iterations);
+    bool Solve(int iterations, bool use_new_lambda_strategy);
 
     /// 边缘化一个frame和以它为host的landmark
     bool Marginalize(std::shared_ptr<Vertex> frameVertex,

@@ -58,7 +58,7 @@ bool Problem::AddEdge(shared_ptr<Edge> edge) {
 }
 
 
-bool Problem::Solve(int iterations) {
+bool Problem::Solve(int iterations, bool use_new_lambda_strategy) {
 
 
     if (edges_.size() == 0 || verticies_.size() == 0) {
@@ -99,7 +99,12 @@ bool Problem::Solve(int iterations) {
             // 更新状态量 X = X+ delta_x
             UpdateStates();
             // 判断当前步是否可行以及 LM 的 lambda 怎么更新
-            oneStepSuccess = IsGoodStepInLM();
+            if(use_new_lambda_strategy){
+            	oneStepSuccess = IsGoodStepInLM2();
+            }else{
+            	oneStepSuccess = IsGoodStepInLM();
+            }
+
             // 后续处理，
             if (oneStepSuccess) {
             	cout<<delta_x_.transpose()<<endl;
@@ -256,7 +261,7 @@ void Problem::ComputeLambdaInitLM() {
     for (ulong i = 0; i < size; ++i) {
         maxDiagonal = std::max(fabs(Hessian_(i, i)), maxDiagonal);
     }
-    double tau = 1e-5;
+    double tau = 1e0;
     currentLambda_ = tau * maxDiagonal;
 }
 
@@ -323,23 +328,24 @@ bool Problem::IsGoodStepInLM2() {
     scale = alpha* delta_x_.transpose() * (currentLambda_ * alpha* delta_x_ + b_);
     scale += 1e-3;    // make sure it's non-zero :)
 
+    RollbackStates();
+    delta_x_ = alpha* delta_x_;
+    UpdateStates();
 
-
+    tempChi = 0.0;
+	for (auto edge: edges_) {
+		edge.second->ComputeResidual();
+		tempChi += edge.second->Chi2();
+	}
     double rho = (currentChi_ - tempChi) / scale;
-
 
     if (rho > 0 && isfinite(tempChi))   // last step was good, 误差在下降
     {
-        double alpha = 1. - pow((2 * rho - 1), 3);
-        alpha = std::min(alpha, 2. / 3.);
-        double scaleFactor = (std::max)(1. / 3., alpha);
-        currentLambda_ *= scaleFactor;
-        ni_ = 2;
-        currentChi_ = tempChi;
-        return true;
+    	currentChi_ = tempChi;
+    	currentLambda_ = (std::max)(currentLambda_ /(1+ alpha), 1e-7);
+    	return true;
     } else {
-        currentLambda_ *= ni_;
-        ni_ *= 2;
+    	currentLambda_ = currentLambda_ +fabs((currentChi_ - tempChi)/(2 * alpha));
         return false;
     }
 }
