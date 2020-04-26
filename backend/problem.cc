@@ -119,6 +119,7 @@ bool Problem::Solve(int iterations, bool use_new_lambda_strategy) {
 //                stop = (b_max <= 1e-12);
                 false_cnt = 0;
             } else {
+            	cout<<"try new lambda="<<currentLambda_<<endl;
                 false_cnt++;
                 RollbackStates();   // 误差没下降，回滚
             }
@@ -261,7 +262,7 @@ void Problem::ComputeLambdaInitLM() {
     for (ulong i = 0; i < size; ++i) {
         maxDiagonal = std::max(fabs(Hessian_(i, i)), maxDiagonal);
     }
-    double tau = 1e0;
+    double tau = 1e-5;
     currentLambda_ = tau * maxDiagonal;
 }
 
