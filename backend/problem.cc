@@ -322,16 +322,19 @@ bool Problem::IsGoodStepInLM2() {
 		tempChi += edge.second->Chi2();
 	}
 
+	//compute alpha
 	double temp = b_.transpose() * delta_x_;
-	double alpha = temp/((currentChi_ - tempChi)/2 + 2 * temp );
+	double alpha = temp/((tempChi - currentChi_)/2 + 2 * temp );
+	alpha = std::max(alpha,0.1);
 
-    double scale = 0;
-    scale = alpha* delta_x_.transpose() * (currentLambda_ * alpha* delta_x_ + b_);
-    scale += 1e-3;    // make sure it's non-zero :)
-
+   //reupdate
     RollbackStates();
     delta_x_ = alpha* delta_x_;
     UpdateStates();
+
+    double scale = 0;
+	scale = delta_x_.transpose() * (currentLambda_ * delta_x_ + b_);
+	scale += 1e-3;    // make sure it's non-zero :)
 
     tempChi = 0.0;
 	for (auto edge: edges_) {
@@ -346,7 +349,7 @@ bool Problem::IsGoodStepInLM2() {
     	currentLambda_ = (std::max)(currentLambda_ /(1+ alpha), 1e-7);
     	return true;
     } else {
-    	currentLambda_ = currentLambda_ +fabs((currentChi_ - tempChi)/(2 * alpha));
+    	currentLambda_ +=  std::abs((currentChi_ - tempChi)/(2 * alpha));
         return false;
     }
 }

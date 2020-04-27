@@ -79,7 +79,7 @@ public:
 int main()
 {
 	bool use_ploy_function = false;
-	bool use_new_lambda_strategy = false;
+	bool use_new_lambda_strategy = true;
     double a=1.0, b=2.0, c=1.0;         // 真实参数值
     int N = 100;                          // 数据点
     double w_sigma= 1.;                 // 噪声Sigma值
@@ -95,6 +95,11 @@ int main()
     vertex->SetParameters(Eigen::Vector3d (0.,0.,0.));
     // 将待估计的参数加入最小二乘问题
     problem.AddVertex(vertex);
+    if(use_ploy_function){
+    	cout<<"use polynomial function"<<endl;
+    }else{
+    	cout<<"use exponential function"<<endl;
+    }
 
     // 构造 N 次观测
     for (int i = 0; i < N; ++i) {
