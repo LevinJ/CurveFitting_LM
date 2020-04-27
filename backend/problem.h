@@ -10,7 +10,12 @@
 #include "backend/vertex.h"
 
 typedef unsigned long ulong;
-
+enum color
+{
+    LM_Method_1,
+	LM_Method_2,
+	LM_Method_3,
+};
 namespace myslam {
 namespace backend {
 
@@ -64,7 +69,7 @@ public:
      * @param iterations
      * @return
      */
-    bool Solve(int iterations, bool use_new_lambda_strategy);
+    bool Solve(int iterations);
 
     /// 边缘化一个frame和以它为host的landmark
     bool Marginalize(std::shared_ptr<Vertex> frameVertex,
@@ -129,12 +134,12 @@ private:
 
     /// Hessian 对角线加上或者减去  Lambda
     void AddLambdatoHessianLM();
-
     void RemoveLambdaHessianLM();
 
     /// LM 算法中用于判断 Lambda 在上次迭代中是否可以，以及Lambda怎么缩放
     bool IsGoodStepInLM();
     bool IsGoodStepInLM2();
+    bool IsGoodStepInLM1();
 
     /// PCG 迭代线性求解器
     VecX PCGSolver(const MatXX &A, const VecX &b, int maxIter);

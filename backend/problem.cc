@@ -13,7 +13,7 @@
 
 using namespace std;
 
-
+extern color g_use_new_lambda_strategy;
 namespace myslam {
 namespace backend {
 void Problem::LogoutVectorSize() {
@@ -58,7 +58,7 @@ bool Problem::AddEdge(shared_ptr<Edge> edge) {
 }
 
 
-bool Problem::Solve(int iterations, bool use_new_lambda_strategy) {
+bool Problem::Solve(int iterations) {
 
 
     if (edges_.size() == 0 || verticies_.size() == 0) {
@@ -99,11 +99,21 @@ bool Problem::Solve(int iterations, bool use_new_lambda_strategy) {
             // 更新状态量 X = X+ delta_x
             UpdateStates();
             // 判断当前步是否可行以及 LM 的 lambda 怎么更新
-            if(use_new_lambda_strategy){
+            switch(g_use_new_lambda_strategy){
+            case color::LM_Method_1:
+            	oneStepSuccess = IsGoodStepInLM1();
+            	break;
+            case color::LM_Method_2:
             	oneStepSuccess = IsGoodStepInLM2();
-            }else{
+            	break;
+            default:
             	oneStepSuccess = IsGoodStepInLM();
-            }
+            };
+//            if(use_new_lambda_strategy){
+//            	oneStepSuccess = IsGoodStepInLM2();
+//            }else{
+//            	oneStepSuccess = IsGoodStepInLM();
+//            }
 
             // 后续处理，
             if (oneStepSuccess) {
@@ -313,6 +323,38 @@ bool Problem::IsGoodStepInLM() {
     }
 }
 
+bool Problem::IsGoodStepInLM1() {
+
+	ulong size = Hessian_.cols();
+	assert(Hessian_.rows() == Hessian_.cols());
+	MatXX DiagH(MatXX::Zero(size, size));
+	for(ulong i =0; i< size; ++i){
+		DiagH(i,i) = fabs(Hessian_(i,i));
+	}
+    double scale = 0;
+    scale = delta_x_.transpose() * (currentLambda_ * DiagH * delta_x_ + b_);
+    scale += 1e-3;    // make sure it's non-zero :)
+
+    // recompute residuals after update state
+    // 统计所有的残差
+    double tempChi = 0.0;
+    for (auto edge: edges_) {
+        edge.second->ComputeResidual();
+        tempChi += edge.second->Chi2();
+    }
+
+    double rho = (currentChi_ - tempChi) / scale;
+    if (rho > 0 && isfinite(tempChi))   // last step was good, 误差在下降
+    {
+        currentLambda_ = std::min(currentLambda_/9.0, 1.0e-7);
+        currentChi_ = tempChi;
+        return true;
+    } else {
+        currentLambda_ = std::min(currentLambda_ * 11.0, 1.0e7);
+        ni_ *= 2;
+        return false;
+    }
+}
 bool Problem::IsGoodStepInLM2() {
 	// recompute residuals after update state
 	// 统计所有的残差

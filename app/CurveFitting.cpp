@@ -75,11 +75,11 @@ public:
 public:
     double x_,y_;  // x 值， y 值为 _measurement
 };
-
+color g_use_new_lambda_strategy = color::LM_Method_1;
 int main()
 {
 	bool use_ploy_function = false;
-	bool use_new_lambda_strategy = true;
+//	bool use_new_lambda_strategy = true;
     double a=1.0, b=2.0, c=1.0;         // 真实参数值
     int N = 100;                          // 数据点
     double w_sigma= 1.;                 // 噪声Sigma值
@@ -133,7 +133,7 @@ int main()
 
     std::cout<<"\nTest CurveFitting start..."<<std::endl;
     /// 使用 LM 求解
-    problem.Solve(30, use_new_lambda_strategy);
+    problem.Solve(30);
 
     std::cout << "-------After optimization, we got these parameters :" << std::endl;
     std::cout << vertex->Parameters().transpose() << std::endl;
